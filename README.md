@@ -92,6 +92,18 @@ for batch in dataloader:
 
 ```
 
+## Installation & usage
+
+Install it: `pip install metabatch`
+
+Requirements:
+- `pytorch`
+
+Look at the example above for an idea or how to use `TaskLoader` with `TaskSet`, or go through the
+examples in `examples/`.
+
+
+
 ## Advantages
 
 - MetaBatch allows for efficient task creation and batching during training, resulting in faster training times.
@@ -101,6 +113,10 @@ for batch in dataloader:
 MetaBatch is a micro-framework for meta-learning in PyTorch that provides convenient tools for
 faster meta-training. It simplifies the task creation process and allows for efficient batching,
 making it a useful tool for researchers and engineers working on meta-learning projects.
+
+## How much faster?
+
+**TODO**: benchmark MAML and CNP examples with typical implementation and other repos.
 
 
 ## License
