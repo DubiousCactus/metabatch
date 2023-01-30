@@ -7,8 +7,8 @@ MetaBatch is a micro-framework for meta-learning in PyTorch. It provides conveni
 
 Training meta-learning models efficiently can be a challenge, especially when it comes to creating
 random tasks of a consistent shape in one batch. The task creation process can be time-consuming
-and typically requires all tasks to have the same amount of context and target points. This can be
-a bottleneck during training:
+and typically requires all tasks in the batch to have the same amount of context and target points.
+This can be a bottleneck during training:
 
 ```python
 # Sample code for creating a batch of tasks with traditional approach
@@ -49,8 +49,7 @@ for batch in dataloader:
 ### Multiprocessing
 Wouldn't it be better to offload the task creation to the dataloader, so that it can be done in
 parallel on multiple cores?
-With **MetaBatch**, we simplify the process by allowing you to do just
-that.
+With **MetaBatch**, we simplify the process by allowing you to do just that.
 We provide a `TaskSet` wrapper, where you can implement the `__gettask__(self, index, n_context,
 n_target)__` method instead of PyTorch's `__getitem(self, index)__`. Our `TaskLoader` and
 custom sampler take care of synchronizing `n_context` and `n_target` for each batch element
@@ -107,7 +106,7 @@ examples in `examples/`.
 ## Advantages
 
 - MetaBatch allows for efficient task creation and batching during training, resulting in faster training times.
-- Our approach provides more task diversity and allows for easy customization of task creation.
+- Our approach provides more task diversity due to online task creation and is easy to use.
 
 
 MetaBatch is a micro-framework for meta-learning in PyTorch that provides convenient tools for

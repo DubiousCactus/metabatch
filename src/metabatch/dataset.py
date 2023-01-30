@@ -50,5 +50,5 @@ class TaskSet(abc.ABC, Dataset):
 
 
     @abc.abstractmethod
-    def __gettask__(self, index, n_context, n_targets):
+    def __gettask__(self, index, n_context, n_target):
         raise NotImplementedError
