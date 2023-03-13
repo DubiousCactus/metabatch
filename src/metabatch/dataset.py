@@ -35,6 +35,7 @@ class TaskSet(abc.ABC, Dataset):
         self.total_tgt_pts = total_tgt_pts
         self.eval = eval
         self.predict_full_target = predict_full_target
+        self.predict_full_target_during_eval = predict_full_target_during_eval
         self._sampling_instructor = None
 
     def register_sampling_inst(self, sampling_inst: DictProxy):
