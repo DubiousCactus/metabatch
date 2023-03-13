@@ -79,7 +79,7 @@ class SeededBatchSampler(Sampler):
         n_targets = (
             (
                 self.dataset.total_tgt_pts - n_context
-                if self.dataset.eval
+                if self.dataset.eval and self.dataset.predict_full_target_during_eval
                 else random.randint(n_context, self.dataset.max_tgt_pts)
             )
             if not self.dataset.predict_full_target

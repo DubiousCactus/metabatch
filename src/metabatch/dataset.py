@@ -25,6 +25,7 @@ class TaskSet(abc.ABC, Dataset):
         total_tgt_pts: int,
         eval: bool,
         predict_full_target: bool,
+        predict_full_target_during_eval: bool,
     ):
         assert max_ctx_pts >= min_pts, "max_ctx_pts must be greater than min_pts"
         assert max_ctx_pts < max_tgt_pts, "max_ctx_pts must be smaller than max_tgt_pts"
