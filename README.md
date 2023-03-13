@@ -1,7 +1,7 @@
 # Introduction
 
 MetaBatch is a micro-framework for meta-learning in PyTorch. It provides convenient `Taskset` and
-`TaskLoader` classes for efficient batching and fast meta-training in a few-shot learning context.
+`TaskLoader` classes for **batch-aware online task creation for meta-learning**.
 
 ## Efficient batching
 
