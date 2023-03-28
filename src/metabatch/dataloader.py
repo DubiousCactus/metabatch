@@ -45,7 +45,14 @@ class SeededBatchSampler(Sampler):
             its size would be less than ``batch_size``
     """
 
-    def __init__(self, dataset, batch_size, drop_last, shuffle: bool = False):
+    def __init__(
+        self,
+        dataset,
+        batch_size,
+        drop_last,
+        shuffle: bool = False,
+        iterations: Optional[int] = None,
+    ):
         if (
             not isinstance(batch_size, int)
             or isinstance(batch_size, bool)
@@ -66,13 +73,32 @@ class SeededBatchSampler(Sampler):
                 "shuffle={}".format(shuffle)
             )
         self.batch_size = batch_size
-        self.drop_last = drop_last
+        self.drop_last = drop_last if iterations is None else False
+        self.iterations = iterations
         self._sampling_inst = Manager().dict()
         dataset.register_sampling_inst(
             self._sampling_inst
         )  # Will modify every copy assigned to all workers, so they all get the same sampling_inst reference
         self.dataset = dataset
-        self.sampler = RandomSampler(dataset) if shuffle else SequentialSampler(dataset)
+        if iterations is not None and iterations <= 0:
+            raise ValueError(
+                "Number of iterations should be a positive integer value, "
+                "but got num_iterations={}".format(iterations)
+            )
+        if iterations is not None and not shuffle:
+            raise ValueError(
+                "shuffle should be True when num_iterations is not None, "
+                "but got shuffle={}".format(shuffle)
+            )
+        self.sampler = (
+            RandomSampler(
+                dataset,
+                replacement=iterations is not None,
+                num_samples=iterations * batch_size if iterations is not None else None,
+            )
+            if shuffle
+            else SequentialSampler(dataset)
+        )
 
     def new_batch(self):
         n_context = random.randint(self.dataset.min_pts, self.dataset.max_ctx_pts)
@@ -109,20 +135,50 @@ class SeededBatchSampler(Sampler):
         else:
             batch = [0] * self.batch_size
             idx_in_batch = 0
-            for idx in self.sampler:
-                self._sampling_inst[idx] = (ctx_pts, tgt_pts)
-                batch[idx_in_batch] = idx
-                idx_in_batch += 1
-                if idx_in_batch == self.batch_size:
-                    yield batch
-                    idx_in_batch = 0
-                    batch = [0] * self.batch_size
-                    ctx_pts, tgt_pts = self.new_batch()
+            n_iterations = 0
+            if self.iterations is not None:
+                while n_iterations < self.iterations:  # type: ignore
+                    for idx in self.sampler:
+                        if n_iterations >= self.iterations:  # type: ignore
+                            break
+                        # Because I'm using a dict, I can't have duplicate indices in
+                        # the batch. However, I'm setting replacement=True in the RandomSampler, so I can
+                        # have duplicate indices. A quick hack is to skip the duplicate indices:
+                        if idx in self._sampling_inst.keys():
+                            # This effectively prevents the batch from having duplicate elements, while
+                            # allowing to resample previously seen elements in future batches. This way, we
+                            # can continue to train on the same dataset indefinitely or for an arbitrary
+                            # number of iterations.
+                            # We also need to update the number of samples in the sampler because it is not
+                            # aware that we skipped some samples.
+                            self.sampler._num_samples += 1  # type: ignore
+                            continue
+                        self._sampling_inst[idx] = (ctx_pts, tgt_pts)
+                        batch[idx_in_batch] = idx
+                        idx_in_batch += 1
+                        if idx_in_batch == self.batch_size:
+                            n_iterations += 1
+                            yield batch
+                            idx_in_batch = 0
+                            batch = [0] * self.batch_size
+                            ctx_pts, tgt_pts = self.new_batch()
+            else:
+                for idx in self.sampler:
+                    self._sampling_inst[idx] = (ctx_pts, tgt_pts)
+                    batch[idx_in_batch] = idx
+                    idx_in_batch += 1
+                    if idx_in_batch == self.batch_size:
+                        yield batch
+                        idx_in_batch = 0
+                        batch = [0] * self.batch_size
+                        ctx_pts, tgt_pts = self.new_batch()
             if idx_in_batch > 0:
                 yield batch[:idx_in_batch]
 
     def __len__(self):
-        if self.drop_last:
+        if self.iterations is not None:
+            return self.iterations
+        elif self.drop_last:
             return len(self.sampler) // self.batch_size
         else:
             return (len(self.sampler) + self.batch_size - 1) // self.batch_size
@@ -134,6 +190,7 @@ class TaskLoader(DataLoader):
         dataset: Dataset,
         batch_size: Optional[int] = 1,
         shuffle: bool = False,
+        iterations: Optional[int] = None,
         num_workers: int = 0,
         collate_fn: Optional[Callable] = None,
         pin_memory: bool = False,
@@ -149,7 +206,9 @@ class TaskLoader(DataLoader):
     ):
         super().__init__(
             dataset,
-            batch_sampler=SeededBatchSampler(dataset, batch_size, drop_last, shuffle),
+            batch_sampler=SeededBatchSampler(
+                dataset, batch_size, drop_last, shuffle, iterations
+            ),
             num_workers=num_workers,
             collate_fn=collate_fn,
             pin_memory=pin_memory,
