@@ -74,7 +74,7 @@ class SeededBatchSampler(Sampler):
             )
         self.batch_size = batch_size
         self.drop_last = drop_last if iterations is None else False
-        self.iterations = iterations
+        self.n_batches = iterations
         self._sampling_inst = Manager().dict()
         dataset.register_sampling_inst(
             self._sampling_inst
@@ -135,11 +135,11 @@ class SeededBatchSampler(Sampler):
         else:
             batch = [0] * self.batch_size
             idx_in_batch = 0
-            n_iterations = 0
-            if self.iterations is not None:
-                while n_iterations < self.iterations:  # type: ignore
+            n_batches = 0
+            if self.n_batches is not None:
+                while n_batches < self.n_batches:  # type: ignore
                     for idx in self.sampler:
-                        if n_iterations >= self.iterations:  # type: ignore
+                        if n_batches >= self.n_batches:  # type: ignore
                             break
                         # Because I'm using a dict, I can't have duplicate indices in
                         # the batch. However, I'm setting replacement=True in the RandomSampler, so I can
@@ -157,7 +157,7 @@ class SeededBatchSampler(Sampler):
                         batch[idx_in_batch] = idx
                         idx_in_batch += 1
                         if idx_in_batch == self.batch_size:
-                            n_iterations += 1
+                            n_batches += 1
                             yield batch
                             idx_in_batch = 0
                             batch = [0] * self.batch_size
@@ -176,8 +176,8 @@ class SeededBatchSampler(Sampler):
                 yield batch[:idx_in_batch]
 
     def __len__(self):
-        if self.iterations is not None:
-            return self.iterations
+        if self.n_batches is not None:
+            return self.n_batches
         elif self.drop_last:
             return len(self.sampler) // self.batch_size
         else:
@@ -190,7 +190,7 @@ class TaskLoader(DataLoader):
         dataset: Dataset,
         batch_size: Optional[int] = 1,
         shuffle: bool = False,
-        iterations: Optional[int] = None,
+        n_batches: Optional[int] = None,
         num_workers: int = 0,
         collate_fn: Optional[Callable] = None,
         pin_memory: bool = False,
@@ -207,7 +207,7 @@ class TaskLoader(DataLoader):
         super().__init__(
             dataset,
             batch_sampler=SeededBatchSampler(
-                dataset, batch_size, drop_last, shuffle, iterations
+                dataset, batch_size, drop_last, shuffle, n_batches
             ),
             num_workers=num_workers,
             collate_fn=collate_fn,
