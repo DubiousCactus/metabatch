@@ -99,18 +99,18 @@ Requirements:
 - `pytorch`
 
 Look at the example above for an idea or how to use `TaskLoader` with `TaskSet`, or go through the
-examples in `examples/`.
+examples in `examples/` (**TODO**).
 
 
 
 ## Advantages
 
-- MetaBatch allows for efficient task creation and batching during training, resulting in faster training times.
-- Our approach provides more task diversity due to online task creation and is easy to use.
-
+- MetaBatch allows for efficient task creation and batching during training, resulting in more task
+    variations since you are no longer limited to precomputed tasks.
+- Reduces boilerplate needed to precompute and load tasks.
 
 MetaBatch is a micro-framework for meta-learning in PyTorch that provides convenient tools for
-faster meta-training. It simplifies the task creation process and allows for efficient batching,
+(potentially faster) meta-training. It simplifies the task creation process and allows for efficient batching,
 making it a useful tool for researchers and engineers working on meta-learning projects.
 
 ## How much faster?
