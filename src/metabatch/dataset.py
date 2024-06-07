@@ -42,12 +42,19 @@ class TaskSet(abc.ABC, Dataset):
         self._sampling_instructor = sampling_inst
 
     def __getitem__(self, index: Union[int, List[int]]) -> Tuple:
-        assert self._sampling_instructor is not None, "sampling_inst attribute not set!"
+        if self._sampling_instructor is None:
+            raise ValueError(
+                "The sampling instructor is not set. "
+                + "Make sure you are using metabatch.TaskLoader "
+                + "instead of pytorch's DataLoader."
+            )
         try:
             n_context, n_target = self._sampling_instructor.pop(index)
         except KeyError as e:
             print(
-                f"Could not get key {e} from sampling_inst -- make sure you are using the SeededBatchSampler as the batch_sampler argument of the DataLoader!"
+                f"Could not get key {e} from sampling_inst -- "
+                + "make sure you are using the SeededBatchSampler as the "
+                + "batch_sampler argument of the DataLoader!"
             )
             raise e
         return self.__gettask__(index, n_context, n_target)

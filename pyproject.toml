@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "metabatch"
-version = "0.9.0"
+version = "0.9.1"
 authors = [
   { name="Théo Morales", email="moralest@tcd.ie" },
 ]
