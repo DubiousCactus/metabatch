@@ -201,7 +201,7 @@ class TaskLoader(DataLoader):
         generator=None,
         *,
         prefetch_factor: int = 2,
-        persistent_workers: bool = False,
+        persistent_workers: bool = True,
         pin_memory_device: str = ""
     ):
         super().__init__(
